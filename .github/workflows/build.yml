@@ -1,0 +1,48 @@
+
+name: Build Plume APK
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Extract ZIP
+        run: |
+          ZIP=$(find . -maxdepth 1 -iname '*.zip' -type f | head -n 1)
+          if [ -z "$ZIP" ]; then
+            echo "ZIP bulunamadi"
+            exit 1
+          fi
+          unzip -o "$ZIP" -d project
+
+      - name: Build APK
+        run: |
+          GRADLEW=$(find project -name gradlew -type f | head -n 1)
+          if [ -z "$GRADLEW" ]; then
+            echo "gradlew bulunamadi"
+            exit 1
+          fi
+          cd "$(dirname "$GRADLEW")"
+          chmod +x gradlew
+          ./gradlew assembleDebug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: plume-apk
+          path: project/**/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
