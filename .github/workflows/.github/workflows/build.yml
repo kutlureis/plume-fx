@@ -1,0 +1,27 @@
+
+name: Build Plume APK
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Extract project ZIP
+        run: |
+          unzip -o Plume_Launcher-fx-GitHub-Build.zip -d project
+      - name: Build APK
+        run: |
+          chmod +x project/Plume_Launcher-main/gradlew
+          cd project/Plume_Launcher-main
+          ./gradlew assembleDebug
+      - uses: actions/upload-artifact@v4
+        with:
+          name: plume-apk
+          path: project/**/build/outputs/apk/debug/*.apk
